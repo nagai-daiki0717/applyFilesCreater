@@ -1,0 +1,665 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Reggae+One&display=swap" rel="stylesheet">
+    
+    <title>通勤申請フォーム</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background: #f8fafd;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        form {
+            max-width: 370px;
+            width: 100%;
+            margin: auto;
+            background: #fff;
+            padding: 0 4px 8px 4px;
+            box-sizing: border-box;
+        }
+        
+        h1 {
+            font-family: "Reggae One", system-ui;
+            font-weight: 400;
+            font-size: 2.6rem;
+            padding-bottom: 1rem;
+            background-image:
+                linear-gradient(0deg, transparent 0 10px, #fff 10px),
+                repeating-linear-gradient(135deg, #bb35d6 0 3px, transparent 3px 6px);
+            color: yellow;
+            -webkit-text-stroke-width: 1.5px;
+            -webkit-text-stroke-color: black;
+            }
+
+        fieldset {
+            max-width: 370px;
+            width: 100%;
+            margin: auto 0 1em 0;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            margin-bottom: 1em;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 1.1em;
+            margin-bottom: 0.2em;
+        }
+
+        input, select, button, textarea {
+            font-size: 1.1em;
+            padding: 0.5em;
+            margin: 0;
+            width: 100%;
+            max-width: 370px;
+            box-sizing: border-box;
+        }
+
+        .large-input {
+            font-size: 1.2em;
+            height: 2.5em;
+        }
+
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            min-width: 650px;
+            width: max-content;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+            background: #fff;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.5em;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .add-row-btn {
+            width: auto;
+            margin: 0.5em 0;
+            font-size: 1em;
+        }
+
+        .section-fields {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3em;
+        }
+
+        .section-fields input {
+            width: 90px;
+            min-width: 0;
+        }
+
+        td input[type="text"], td input[type="number"] {
+            min-width: 70px;
+        }
+
+        .status {
+            margin: 0.5em 0 1em 0;
+            padding: 0.6em;
+            border-radius: 6px;
+            font-size: 0.95em;
+            background: #f1f5ff;
+            border: 1px solid #d6e4ff;
+            color: #1b2a52;
+            word-break: break-word;
+        }
+
+        .status.error {
+            background: #fff2f2;
+            border-color: #ffd0d0;
+            color: #7a1b1b;
+        }
+
+        .status.ok {
+            background: #f2fff6;
+            border-color: #c8f1d4;
+            color: #0f4b24;
+        }
+
+        .small {
+            font-size: 0.9em;
+            color: #445;
+            line-height: 1.4;
+        }
+
+
+
+        .previous-excel-area {
+            border: 1px solid #d6e4ff;
+            background: #f7faff;
+            border-radius: 6px;
+            padding: 0.7em;
+            margin-bottom: 1em;
+            text-align: left;
+        }
+
+        .hidden-by-previous-excel {
+            display: none !important;
+        }
+
+        @media (max-width: 1000px) {
+            html, body {
+                overflow-x: hidden;
+            }
+
+            body {
+                margin: 0;
+            }
+
+            form {
+                max-width: 100vw;
+                width: 100vw;
+                padding: 0 1vw;
+            }
+
+            fieldset {
+                max-width: 92vw;
+                width: 100%;
+                padding: 0 1vw;
+            }
+
+            .form-label {
+                font-size: 1em;
+            }
+
+            input, select, button, textarea {
+                font-size: 1em;
+                padding: 0.2em;
+                width: 100%;
+                max-width: 370px;
+            }
+
+            .large-input {
+                font-size: 1em;
+                height: 2em;
+            }
+
+            .table-scroll {
+                width: 95vw;
+                margin-left: -1vw;
+                padding-bottom: 8px;
+            }
+
+            table {
+                font-size: 0.92em;
+                min-width: 650px;
+                width: max-content;
+            }
+
+            th, td {
+                font-size: 0.92em;
+                padding: 0.15em;
+            }
+
+            .section-fields input {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <form id="commute-form" style="text-align: center;">
+        <h1 style="padding-top: 1.5rem;">定期申請書 作成</h1>
+        <div class="form-group">
+            <span class="form-label">提出日</span>
+            <input type="month" name="submit_date" required>
+        </div>
+
+        <div class="form-group" data-previous-excel-remove>
+            <span class="form-label">勤務地名</span>
+            <input type="text" name="workplace_name" class="large-input" required>
+        </div>
+
+        <div class="form-group" data-previous-excel-remove>
+            <span class="form-label">勤務先住所</span>
+            <input type="text" name="workplace" class="large-input" required>
+        </div>
+
+        <div class="form-group" data-previous-excel-remove>
+            <span class="form-label">申請者氏名</span>
+            <input type="text" name="applicant_name" required>
+        </div>
+
+        <div class="form-group" data-previous-excel-remove>
+            <span class="form-label">届出の理由</span>
+            <select name="reason" required>
+                <option value="">選択してください</option>
+                <option value="新規">新規</option>
+                <option value="異動">異動</option>
+                <option value="転居">転居</option>
+                <option value="通勤経路・方法の変更">通勤経路・方法の変更</option>
+                <option value="運賃の負担額の変更">運賃の負担額の変更</option>
+                <option value="継続">継続</option>
+            </select>
+        </div>
+
+        <div class="form-group keep-when-previous-excel">
+            <span class="form-label">上記理由が生じた年月日</span>
+            <input type="month" name="reason_date" required>
+        </div>
+
+        <div class="form-group previous-excel-area">
+            <span class="form-label">前月分の定期申請Excel（任意）</span>
+            <input type="file" id="previous_application_excel" name="previous_application_excel" accept=".xlsx,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12">
+            <div class="small" style="margin-top:0.4em;">
+                ※ 添付した場合、前月分Excelから勤務地・申請者・定期明細などを読み込みます。画面では、提出日／上記理由が生じた年月日／利用開始日／定期券の写真のみ入力します。
+            </div>
+        </div>
+
+        <fieldset data-previous-excel-remove>
+            <legend>定期記載表形式</legend>
+            <div class="table-scroll">
+                <table id="commute-table">
+                    <thead>
+                        <tr>
+                            <th>交通機関名</th>
+                            <th>移動区間</th>
+                            <th>所要時間（片道・分）</th>
+                            <th>購入期間</th>
+                            <th>定期代金額</th>
+                            <th>備考</th>
+                            <th>削除</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" name="transportation[]" required></td>
+                            <td>
+                                <div class="section-fields">
+                                    <input type="text" name="section_from[]" required placeholder="出発駅">
+                                    <span>～</span>
+                                    <input type="text" name="section_to[]" required placeholder="到着駅">
+                                </div>
+                            </td>
+                            <td><input type="number" name="oneway_time[]" min="0" value="0" required></td>
+                            <td><input type="text" name="purchase_period[]" required></td>
+                            <td><input type="number" name="commuter_pass_price[]" min="0" value="0" required></td>
+                            <td><input type="text" name="remarks[]"></td>
+                            <td><button type="button" onclick="removeRow(this)">削除</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="add-row-btn" onclick="addRow()">＋ 行を追加</button>
+        </fieldset>
+
+        <div class="form-group" data-previous-excel-remove>
+            <span class="form-label">片道の総通勤時間（分）</span>
+            <input type="number" name="total_commute_time" id="total_commute_time" value="0" readonly required>
+        </div>
+
+        <div class="form-group" data-previous-excel-remove>
+            <span class="form-label">定期代合計金額</span>
+            <input type="number" name="total_commuter_pass_price" id="total_commuter_pass_price" value="0" readonly required>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">利用開始日</span>
+            <input type="month" name="start_date" required>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">定期券の写真（複数選択可）</span>
+            <input type="file" id="commuter_pass_photos" name="commuter_pass_photos" accept="image/*" multiple>
+            <div class="small" style="margin-top:0.4em;">
+                ※ 写真は先にアップロードしてから申請を送信します。アップロード後に「送信」を押してください。
+            </div>
+        </div>
+
+        <div id="status" class="status" style="display:none;"></div>
+
+        <button id="submit-btn" type="submit">送信</button>
+    </form>
+
+    <script>
+        // ===========================
+        // 設定：あなたのAPIに合わせて書き換える
+        // ===========================
+        const API_BASE = "https://uakllx0zue.execute-api.ap-northeast-1.amazonaws.com/default/PythonAPI";
+        const API_UPLOAD_URL = `${API_BASE}/upload-url`;   // 署名付きPUT URLを返すAPI（Lambda）
+        const API_GENERATE = `${API_BASE}/generate`;       // Excel生成API（Lambda）
+
+        // ===========================
+        // 既存：行追加 / 削除 / 合計（画面表示用）
+        // ===========================
+        function addRow() {
+            const tbody = document.querySelector('#commute-table tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                    <td><input type="text" name="transportation[]" required></td>
+                    <td>
+                        <div class="section-fields">
+                            <input type="text" name="section_from[]" required placeholder="出発駅">
+                            <span>～</span>
+                            <input type="text" name="section_to[]" required placeholder="到着駅">
+                        </div>
+                    </td>
+                    <td><input type="number" name="oneway_time[]" min="0" value="0" required></td>
+                    <td><input type="text" name="purchase_period[]" required></td>
+                    <td><input type="number" name="commuter_pass_price[]" min="0" value="0" required></td>
+                    <td><input type="text" name="remarks[]"></td>
+                    <td><button type="button" onclick="removeRow(this)">削除</button></td>
+                `;
+            tbody.appendChild(tr);
+            attachListeners();
+            calculateTotals(); // 追加直後に再計算
+        }
+
+        function removeRow(btn) {
+            const tbody = document.querySelector('#commute-table tbody');
+            if (tbody.rows.length > 1) {
+                btn.closest('tr').remove();
+                calculateTotals();
+            }
+        }
+
+        function calculateTotals() {
+            let totalTime = 0;
+            let totalPrice = 0;
+
+            document.querySelectorAll('input[name="oneway_time[]"]').forEach(input => {
+                totalTime += Number(input.value) || 0;
+            });
+
+            document.querySelectorAll('input[name="commuter_pass_price[]"]').forEach(input => {
+                totalPrice += Number(input.value) || 0;
+            });
+
+            document.getElementById('total_commute_time').value = totalTime;
+            document.getElementById('total_commuter_pass_price').value = totalPrice;
+        }
+
+        function attachListeners() {
+            document.querySelectorAll('input[name="oneway_time[]"], input[name="commuter_pass_price[]"]').forEach(input => {
+                input.oninput = calculateTotals;
+            });
+        }
+        attachListeners();
+        calculateTotals();
+
+        // ===========================
+        // UIヘルパー
+        // ===========================
+        const statusEl = document.getElementById("status");
+        const submitBtn = document.getElementById("submit-btn");
+        const previousExcelInput = document.getElementById("previous_application_excel");
+        const previousExcelTargets = document.querySelectorAll("[data-previous-excel-remove]");
+
+        function setStatus(msg, type = "") {
+            statusEl.style.display = "block";
+            statusEl.className = "status" + (type ? ` ${type}` : "");
+            statusEl.textContent = msg;
+        }
+
+        function setSubmitting(isSubmitting) {
+            submitBtn.disabled = isSubmitting;
+            submitBtn.textContent = isSubmitting ? "処理中..." : "送信";
+        }
+
+        function hasPreviousExcel() {
+            return previousExcelInput?.files && previousExcelInput.files.length > 0;
+        }
+
+        function setFieldsDisabled(container, disabled) {
+            container.querySelectorAll("input, select, textarea, button").forEach(el => {
+                if (!el.dataset.originalRequired) {
+                    el.dataset.originalRequired = el.required ? "true" : "false";
+                }
+
+                if (disabled) {
+                    el.required = false;
+                    el.disabled = true;
+                } else {
+                    el.disabled = false;
+                    el.required = el.dataset.originalRequired === "true";
+                }
+            });
+        }
+
+        function togglePreviousExcelMode() {
+            const usePreviousExcel = hasPreviousExcel();
+            previousExcelTargets.forEach(target => {
+                target.classList.toggle("hidden-by-previous-excel", usePreviousExcel);
+                setFieldsDisabled(target, usePreviousExcel);
+            });
+
+            if (usePreviousExcel) {
+                setStatus("前月分Excelを読み込む形式に切り替えました。提出日、上記理由が生じた年月日、利用開始日、定期券の写真のみ入力してください。", "ok");
+            } else {
+                setStatus("通常入力形式に戻しました。", "");
+            }
+        }
+
+        previousExcelInput?.addEventListener("change", togglePreviousExcelMode);
+
+        // ===========================
+        // ユーティリティ
+        // ===========================
+        function monthToDateStr(value) {
+            if (!value || !/^\d{4}-\d{2}$/.test(value)) return "";
+            return `${value}-01`;
+        }
+
+        function getArrayValues(form, nameWithBrackets) {
+            return Array.from(form.querySelectorAll(`[name="${nameWithBrackets}"]`)).map(el => el.value);
+        }
+
+        function uuidLike() {
+            return (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        }
+
+        // ===========================
+        // 写真アップロード（S3署名付きPUT URL方式）
+        // ===========================
+        async function requestUploadUrl(file) {
+            const body = {
+                file_name: file.name,
+                content_type: file.type
+            };
+
+            const res = await fetch(API_UPLOAD_URL, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const t = await res.text();
+                throw new Error(`upload-url API error: ${t}`);
+            }
+            return await res.json(); // { put_url, file_key, ... }
+        }
+
+        async function uploadFileToPresignedUrl(putUrl, file) {
+            const res = await fetch(putUrl, {
+                method: "PUT",
+                headers: { "Content-Type": file.type || "application/octet-stream" },
+                body: file
+            });
+
+            if (!res.ok) {
+                const t = await res.text();
+                throw new Error(`S3 PUT failed: ${res.status} ${t}`);
+            }
+        }
+
+        async function uploadSelectedPhotos(files) {
+            const uploaded = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                if (!file.type.startsWith("image/")) {
+                    throw new Error(`画像以外が選択されています: ${file.name}`);
+                }
+
+                setStatus(`写真をアップロード中... (${i+1}/${files.length})`, "");
+
+                const { put_url, file_key } = await requestUploadUrl(file);
+                await uploadFileToPresignedUrl(put_url, file);
+
+                uploaded.push({
+                    file_key,
+                    file_name: file.name,
+                    content_type: file.type
+                });
+            }
+            return uploaded;
+        }
+
+        async function uploadPreviousApplicationExcel() {
+            if (!hasPreviousExcel()) {
+                return null;
+            }
+
+            const file = previousExcelInput.files[0];
+            const lowerName = file.name.toLowerCase();
+            if (!lowerName.endsWith(".xlsx") && !lowerName.endsWith(".xlsm")) {
+                throw new Error(`Excelファイル（.xlsx または .xlsm）を選択してください: ${file.name}`);
+            }
+
+            setStatus("前月分の定期申請Excelをアップロード中...", "");
+            const { put_url, file_key } = await requestUploadUrl(file);
+            await uploadFileToPresignedUrl(put_url, file);
+
+            return {
+                file_key,
+                file_name: file.name,
+                content_type: file.type || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            };
+        }
+
+        // ===========================
+        // フォーム送信 → JSON生成 → 生成API → ダウンロード
+        // ※ 合計（総通勤時間 / 合計金額）は「画面表示用」であり、リクエストには送らない
+        // ===========================
+        document.getElementById("commute-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // 表示用合計を最新化（サーバには送らない）
+            calculateTotals();
+
+            setSubmitting(true);
+            setStatus("入力を確認しています...", "");
+
+            try {
+                const form = e.target;
+
+                const previousExcelMetadata = await uploadPreviousApplicationExcel();
+
+                // 定期明細の配列を組み立て
+                // 前月分Excelを添付した場合、定期明細などはJava側のExcel読み込み処理で補完するため、画面からは送らない。
+                let passes = [];
+                if (!previousExcelMetadata) {
+                    const transportation = getArrayValues(form, "transportation[]");
+                    const sectionFrom = getArrayValues(form, "section_from[]");
+                    const sectionTo = getArrayValues(form, "section_to[]");
+                    const oneway = getArrayValues(form, "oneway_time[]");
+                    const period = getArrayValues(form, "purchase_period[]");
+                    const price = getArrayValues(form, "commuter_pass_price[]");
+                    const remarks = getArrayValues(form, "remarks[]");
+
+                    passes = transportation.map((t, idx) => ({
+                        transportation: t,
+                        section: `${sectionFrom[idx] || ""}～${sectionTo[idx] || ""}`,
+                        one_way_minutes: Number(oneway[idx]) || 0,
+                        purchase_period_text: period[idx] || "",
+                        amount_yen: Number(price[idx]) || 0,
+                        note: remarks[idx] || ""
+                    }));
+                }
+
+                // 写真アップロード
+                const fileInput = document.getElementById("commuter_pass_photos");
+                const files = fileInput?.files ? Array.from(fileInput.files) : [];
+                let pass_photos = [];
+                if (files.length > 0) {
+                    pass_photos = await uploadSelectedPhotos(files);
+                }
+
+                setStatus("申請書を生成しています...", "");
+
+                // 送信payload（合計は送らない）
+                // previous_application_excel がある場合、work_location/applicant/reason_text/passes は送らず、Java側で前月Excelから補完する。
+                const payload = {
+                    request_id: uuidLike(),
+                    input_mode: previousExcelMetadata ? "previous_excel" : "manual",
+                    submitted_at: monthToDateStr(form.submit_date.value),
+                    notification: {
+                        reason_effective_date: monthToDateStr(form.reason_date.value)
+                    },
+                    commute: {
+                        usage_start_date: monthToDateStr(form.start_date.value),
+                        pass_photos,
+                        previous_application_excel: previousExcelMetadata
+                    }
+                };
+
+                if (!previousExcelMetadata) {
+                    payload.work_location = {
+                        name: form.workplace_name.value.trim(),
+                        address: form.workplace.value.trim()
+                    };
+                    payload.applicant = {
+                        name: form.applicant_name.value.trim()
+                    };
+                    payload.notification.reason_text = form.reason.value;
+                    payload.commute.passes = passes;
+                }
+
+                const res = await fetch(API_GENERATE, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const t = await res.text();
+                    throw new Error(`generate API error: ${t}`);
+                }
+
+                const data = await res.json();
+                if (!data.download_url) {
+                    throw new Error("download_url が返ってきませんでした");
+                }
+
+                setStatus("生成完了！ダウンロードを開始します。", "ok");
+                window.location.href = data.download_url;
+
+            } catch (err) {
+                console.error(err);
+                setStatus(`エラー: ${err.message || err}`, "error");
+            } finally {
+                setSubmitting(false);
+            }
+        });
+    </script>
+</body>
+</html>

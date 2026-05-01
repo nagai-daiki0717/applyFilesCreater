@@ -12,7 +12,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class LambdaHandler implements RequestStreamHandler {
@@ -22,6 +24,8 @@ public class LambdaHandler implements RequestStreamHandler {
     private final S3Service s3Service = new S3Service();
 
     private final TeikiExcelService teikiExcelService = new TeikiExcelService(s3Service);
+
+    private final TeikiExcelReadService teikiExcelReadService = new TeikiExcelReadService();
 
     private final KotsuhiExcelService kotsuhiExcelService = new KotsuhiExcelService();
 
@@ -92,7 +96,10 @@ public class LambdaHandler implements RequestStreamHandler {
 
     private Map<String, Object> handleGenerate(JsonNode event, String origin) {
         Path templateLocal = Path.of("/tmp/template.xlsx");
+        Path previousExcelLocal = Path.of("/tmp/previous_application.xlsx");
         Path outputLocal = Path.of("/tmp/output.xlsx");
+
+        Set<String> tempUploadKeys = new LinkedHashSet<>();
 
         try {
             if (Env.BUCKET.isBlank() || Env.TEMPLATE_KEY.isBlank()) {
@@ -106,12 +113,31 @@ public class LambdaHandler implements RequestStreamHandler {
             }
 
             JsonNode payload = readJsonBody(event);
+            tempUploadKeys.addAll(collectTemporaryUploadKeys(payload));
+
+            String previousExcelKey = payload.path("commute").path(
+                    "previous_application_excel").path("file_key").asText("");
+
+            if (!previousExcelKey.isBlank()) {
+                if (!isTemporaryUploadKey(previousExcelKey)) {
+                    return ApiResponse.json(400, Map.of("error",
+                            "invalid_file_key", "detail",
+                            "previous_application_excel.file_key is not under temporary prefix"),
+                            origin);
+                }
+
+                s3Service.downloadToFile(Env.BUCKET, previousExcelKey,
+                        previousExcelLocal);
+                payload = teikiExcelReadService.buildPayloadFromPreviousExcel(
+                        previousExcelLocal, payload);
+            }
 
             s3Service.downloadToFile(Env.BUCKET, Env.TEMPLATE_KEY,
                     templateLocal);
 
-            java.util.List<String> tempImageKeys = teikiExcelService
+            java.util.List<String> usedPhotoKeys = teikiExcelService
                     .generateWorkbook(templateLocal, outputLocal, payload);
+            tempUploadKeys.addAll(usedPhotoKeys);
 
             String yyyymmdd = LocalDate.now(ZoneOffset.UTC).format(
                     DateTimeFormatter.BASIC_ISO_DATE);
@@ -120,16 +146,6 @@ public class LambdaHandler implements RequestStreamHandler {
 
             s3Service.uploadFile(outputLocal, Env.BUCKET, outKey,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-
-            for (String tempKey : tempImageKeys) {
-                try {
-                    s3Service.deleteObject(Env.BUCKET, tempKey);
-                    System.out.println("deleted temp image: " + tempKey);
-                } catch (Exception ex) {
-                    System.out.println("failed to delete temp image: " + tempKey
-                            + " / " + ex);
-                }
-            }
 
             String downloadFilename = teikiExcelService.buildOutputFilename(
                     payload);
@@ -146,10 +162,19 @@ public class LambdaHandler implements RequestStreamHandler {
                     "detail", e.toString()), origin);
 
         } finally {
+            deleteTemporaryUploadObjects(tempUploadKeys);
+
             try {
                 java.nio.file.Files.deleteIfExists(templateLocal);
             } catch (Exception ex) {
                 System.out.println("failed to delete local template: " + ex);
+            }
+
+            try {
+                java.nio.file.Files.deleteIfExists(previousExcelLocal);
+            } catch (Exception ex) {
+                System.out.println("failed to delete local previous excel: "
+                        + ex);
             }
 
             try {
@@ -224,6 +249,55 @@ public class LambdaHandler implements RequestStreamHandler {
                 java.nio.file.Files.deleteIfExists(outputLocal);
             } catch (Exception ex) {
                 System.out.println("failed to delete local output: " + ex);
+            }
+        }
+    }
+
+    private Set<String> collectTemporaryUploadKeys(JsonNode payload) {
+        Set<String> keys = new LinkedHashSet<>();
+
+        JsonNode previousExcel = payload.path("commute").path(
+                "previous_application_excel");
+        addIfTemporaryUploadKey(keys, previousExcel.path("file_key").asText(
+                ""));
+
+        JsonNode passPhotos = payload.path("commute").path("pass_photos");
+        if (passPhotos.isArray()) {
+            for (JsonNode photo : passPhotos) {
+                addIfTemporaryUploadKey(keys, photo.path("file_key").asText(
+                        ""));
+            }
+        }
+
+        return keys;
+    }
+
+    private void addIfTemporaryUploadKey(Set<String> keys, String key) {
+        if (isTemporaryUploadKey(key)) {
+            keys.add(key);
+        }
+    }
+
+    private boolean isTemporaryUploadKey(String key) {
+        if (key == null || key.isBlank() || Env.TEMP_PREFIX.isBlank()) {
+            return false;
+        }
+        return key.startsWith(Env.TEMP_PREFIX + "/");
+    }
+
+    private void deleteTemporaryUploadObjects(Set<String> keys) {
+        for (String key : keys) {
+            if (!isTemporaryUploadKey(key)) {
+                System.out.println("skip delete non-temp upload key: " + key);
+                continue;
+            }
+
+            try {
+                s3Service.deleteObject(Env.BUCKET, key);
+                System.out.println("deleted temp upload object: " + key);
+            } catch (Exception ex) {
+                System.out.println("failed to delete temp upload object: " + key
+                        + " / " + ex);
             }
         }
     }

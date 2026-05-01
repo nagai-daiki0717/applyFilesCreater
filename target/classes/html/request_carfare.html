@@ -1,0 +1,604 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Reggae+One&display=swap" rel="stylesheet">
+
+    <title>交通費精算書</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        *, *::before, *::after {
+            box-sizing: inherit;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: #f8fafd;
+            overflow-x: hidden;
+        }
+
+        form {
+            max-width: 370px;
+            width: 100%;
+            margin: auto;
+            background: #fff;
+            padding: 0 4px 12px 4px;
+        }
+
+        h1 {
+            font-family: "Reggae One", system-ui;
+            font-weight: 400;
+            font-size: 2.6rem;
+            padding-bottom: 1rem;
+            background-image:
+                linear-gradient(0deg, transparent 0 10px, #fff 10px),
+                repeating-linear-gradient(135deg, #bb35d6 0 3px, transparent 3px 6px);
+            color: yellow;
+            -webkit-text-stroke-width: 1.5px;
+            -webkit-text-stroke-color: black;
+            margin: 0;
+        }
+
+        fieldset {
+            max-width: 370px;
+            width: 100%;
+            margin: 0 0 1em 0;
+            box-sizing: border-box;
+        }
+
+        legend {
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 1em;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 1.05em;
+            margin-bottom: 0.2em;
+        }
+
+        input, select, button, textarea {
+            font-size: 1.05em;
+            padding: 0.5em;
+            margin: 0;
+            width: 100%;
+            max-width: 370px;
+            box-sizing: border-box;
+        }
+
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            min-width: 980px;
+            width: max-content;
+            border-collapse: collapse;
+            margin-bottom: 1em;
+            background: #fff;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 0.45em;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        td input,
+        td select,
+        td button {
+            width: 100%;
+            min-width: 90px;
+            max-width: none;
+        }
+
+        td input[type="date"] {
+            min-width: 145px;
+        }
+
+        td input[type="number"] {
+            min-width: 90px;
+        }
+
+        .add-row-btn {
+            width: auto;
+            margin: 0.5em 0;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        
+        .row-button-area {
+            display: flex;
+            gap: 0.5em;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 0.5em 0;
+        }
+
+        .copy-row-btn {
+            width: auto;
+            margin: 0.5em 0;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            min-width: 70px;
+            width: auto;
+            cursor: pointer;
+        }
+
+        .amount-cell {
+            min-width: 100px;
+            font-weight: bold;
+        }
+
+        .summary-box {
+            margin: 0.75em 0 1em 0;
+            padding: 0.8em;
+            border: 1px solid #d6e4ff;
+            background: #f7faff;
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1em;
+            margin-bottom: 0.4em;
+        }
+
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .status {
+            margin: 0.5em 0 1em 0;
+            padding: 0.6em;
+            border-radius: 6px;
+            font-size: 0.95em;
+            background: #f1f5ff;
+            border: 1px solid #d6e4ff;
+            color: #1b2a52;
+            word-break: break-word;
+            text-align: left;
+        }
+
+        .status.error {
+            background: #fff2f2;
+            border-color: #ffd0d0;
+            color: #7a1b1b;
+        }
+
+        .status.ok {
+            background: #f2fff6;
+            border-color: #c8f1d4;
+            color: #0f4b24;
+        }
+
+        .note {
+            font-size: 0.9em;
+            color: #445;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        @media (max-width: 1000px) {
+            form {
+                max-width: 100vw;
+                width: 100vw;
+                padding: 0 1vw 12px 1vw;
+            }
+
+            fieldset {
+                max-width: 96vw;
+                padding: 0 1vw;
+            }
+
+            input, select, button, textarea {
+                font-size: 1em;
+                padding: 0.35em;
+            }
+
+            .table-scroll {
+                width: 95vw;
+                margin-left: -1vw;
+                padding-bottom: 8px;
+            }
+
+            table {
+                font-size: 0.92em;
+                min-width: 980px;
+            }
+
+            th, td {
+                font-size: 0.92em;
+                padding: 0.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <form id="commute-form" style="text-align: center;">
+        <h1 style="padding-top: 1.5rem;">交通費精算書 作成</h1>
+
+        <div class="form-group">
+            <span class="form-label">申請年月</span>
+            <input type="month" name="submit_date" required>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">社員No</span>
+            <input type="text" name="applicant_no" required>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">申請者氏名</span>
+            <input type="text" name="applicant_name" required>
+        </div>
+
+        <div class="form-group">
+            <span class="form-label">プロジェクト名</span>
+            <input type="text" name="applicant_project_name" required>
+        </div>
+
+        <fieldset>
+            <legend>交通費記載表形式</legend>
+
+            <div class="note" style="margin-bottom: 0.8em;">
+                単価は片道金額を入力してください。<br>
+                「往」を選択した場合、金額は自動で2倍になります。
+            </div>
+
+            <div class="table-scroll">
+                <table id="commute-table">
+                    <thead>
+                        <tr>
+                            <th>月日</th>
+                            <th>行き先</th>
+                            <th>利用路線（機関）</th>
+                            <th>理由</th>
+                            <th>出発</th>
+                            <th>到着</th>
+                            <th>単価</th>
+                            <th>片/往</th>
+                            <th>交通費区分</th>
+                            <th>金額</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="date" name="carfare_date[]" required></td>
+                            <td><input type="text" name="carfare_destination[]" required></td>
+                            <td><input type="text" name="carfare_destination_line[]" required></td>
+                            <td><input type="text" name="carfare_reason[]" required></td>
+                            <td><input type="text" name="carfare_departure[]" required></td>
+                            <td><input type="text" name="carfare_arrival[]" required></td>
+                            <td><input type="number" name="carfare_unit_price[]" min="0" value="0" required></td>
+                            <td>
+                                <select name="carfare_one_way_or_round_trip[]">
+                                    <option value="one_way">片</option>
+                                    <option value="round_trip">往</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="carfare_section[]">
+                                    <option value="return_to_office">帰社</option>
+                                    <option value="remote_within_company">リモート【社内】</option>
+                                    <option value="remote_field_work">リモート【現場】</option>
+                                    <option value="other">その他</option>
+                                    <option value="customer_site">顧客先</option>
+                                </select>
+                            </td>
+                            <td class="amount-cell">
+                                <span class="row-amount">0</span>円
+                            </td>
+                            <td>
+                                <button type="button" class="delete-btn" onclick="removeRow(this)">削除</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="row-button-area">
+              <button type="button" class="add-row-btn" onclick="addRow()">＋ 行を追加</button>
+              <button type="button" class="copy-row-btn" onclick="copyLastFilledRow()">記載済み行をコピー</button>
+            </div>
+            
+            <div class="summary-box">
+                <div class="summary-row">
+                    <span>明細件数</span>
+                    <strong><span id="total-count">1</span>件</strong>
+                </div>
+                <div class="summary-row">
+                    <span>合計金額</span>
+                    <strong><span id="total-amount">0</span>円</strong>
+                </div>
+            </div>
+        </fieldset>
+
+        <div id="status" class="status" style="display:none;"></div>
+
+        <button id="submit-btn" type="submit">送信</button>
+    </form>
+
+    <script>
+        const API_BASE = "https://uakllx0zue.execute-api.ap-northeast-1.amazonaws.com/default/PythonAPI";
+        const API_GENERATE = `${API_BASE}/carfare_generate`;
+
+        const statusEl = document.getElementById("status");
+        const submitBtn = document.getElementById("submit-btn");
+        const tbody = document.querySelector("#commute-table tbody");
+        const totalCountEl = document.getElementById("total-count");
+        const totalAmountEl = document.getElementById("total-amount");
+
+        function setStatus(msg, type = "") {
+            statusEl.style.display = "block";
+            statusEl.className = "status" + (type ? ` ${type}` : "");
+            statusEl.textContent = msg;
+        }
+
+        function setSubmitting(isSubmitting) {
+            submitBtn.disabled = isSubmitting;
+            submitBtn.textContent = isSubmitting ? "処理中..." : "送信";
+        }
+
+        function uuidLike() {
+            return crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+
+        function getValue(el) {
+            return el ? el.value.trim() : "";
+        }
+
+        function toNumber(value) {
+            const num = Number(value);
+            return Number.isFinite(num) ? num : 0;
+        }
+
+        function calcRowAmount(unitPriceValue, tripTypeValue) {
+            const unitPrice = toNumber(unitPriceValue);
+            return tripTypeValue === "round_trip" ? unitPrice * 2 : unitPrice;
+        }
+
+        function createRowHtml() {
+            return `
+                <td><input type="date" name="carfare_date[]" required></td>
+                <td><input type="text" name="carfare_destination[]" required></td>
+                <td><input type="text" name="carfare_destination_line[]" required></td>
+                <td><input type="text" name="carfare_reason[]" required></td>
+                <td><input type="text" name="carfare_departure[]" required></td>
+                <td><input type="text" name="carfare_arrival[]" required></td>
+                <td><input type="number" name="carfare_unit_price[]" min="0" value="0" required></td>
+                <td>
+                    <select name="carfare_one_way_or_round_trip[]">
+                        <option value="one_way">片</option>
+                        <option value="round_trip">往</option>
+                    </select>
+                </td>
+                <td>
+                    <select name="carfare_section[]">
+                        <option value="return_to_office">帰社</option>
+                        <option value="remote_within_company">リモート【社内】</option>
+                        <option value="remote_field_work">リモート【現場】</option>
+                        <option value="other">その他</option>
+                        <option value="customer_site">顧客先</option>
+                    </select>
+                </td>
+                <td class="amount-cell">
+                    <span class="row-amount">0</span>円
+                </td>
+                <td>
+                    <button type="button" class="delete-btn" onclick="removeRow(this)">削除</button>
+                </td>
+            `;
+        }
+
+        function updateRowAmount(tr) {
+            const unitPriceInput = tr.querySelector('[name="carfare_unit_price[]"]');
+            const tripTypeSelect = tr.querySelector('[name="carfare_one_way_or_round_trip[]"]');
+            const amountEl = tr.querySelector(".row-amount");
+
+            const amount = calcRowAmount(unitPriceInput?.value, tripTypeSelect?.value);
+
+            if (amountEl) {
+                amountEl.textContent = amount.toLocaleString();
+            }
+
+            return amount;
+        }
+
+        function updateSummary() {
+            const rows = Array.from(document.querySelectorAll("#commute-table tbody tr"));
+            let totalAmount = 0;
+
+            rows.forEach(tr => {
+                totalAmount += updateRowAmount(tr);
+            });
+
+            totalCountEl.textContent = rows.length.toLocaleString();
+            totalAmountEl.textContent = totalAmount.toLocaleString();
+        }
+
+        function addRow() {
+            const tr = document.createElement("tr");
+            tr.innerHTML = createRowHtml();
+            tbody.appendChild(tr);
+            updateSummary();
+        }
+        
+        function copyLastFilledRow() {
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+
+            const sourceRow = [...rows].reverse().find(tr => {
+                return Array.from(tr.querySelectorAll("input, select")).some(el => {
+                    if (el.name === "carfare_unit_price[]") {
+                        return toNumber(el.value) > 0;
+                    }
+                    return el.value && el.value.trim() !== "";
+                });
+            });
+
+            if (!sourceRow) {
+                setStatus("コピーできる記載済み行がありません。", "error");
+                return;
+            }
+
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = createRowHtml();
+
+            const sourceInputs = sourceRow.querySelectorAll("input, select");
+            const newInputs = newRow.querySelectorAll("input, select");
+
+            sourceInputs.forEach((sourceInput, index) => {
+                if (newInputs[index]) {
+                    newInputs[index].value = sourceInput.value;
+                }
+            });
+
+            tbody.appendChild(newRow);
+            updateSummary();
+            setStatus("記載済み行をコピーしました。", "ok");
+        }
+        
+        function removeRow(btn) {
+            if (tbody.rows.length <= 1) {
+                setStatus("明細は1行以上必要です。", "error");
+                return;
+            }
+
+            btn.closest("tr").remove();
+            updateSummary();
+        }
+
+        tbody.addEventListener("input", (e) => {
+            const tr = e.target.closest("tr");
+            if (!tr) return;
+
+            if (
+                e.target.matches('[name="carfare_unit_price[]"]') ||
+                e.target.matches('[name="carfare_one_way_or_round_trip[]"]')
+            ) {
+                updateSummary();
+            }
+        });
+
+        tbody.addEventListener("change", (e) => {
+            const tr = e.target.closest("tr");
+            if (!tr) return;
+
+            if (
+                e.target.matches('[name="carfare_unit_price[]"]') ||
+                e.target.matches('[name="carfare_one_way_or_round_trip[]"]')
+            ) {
+                updateSummary();
+            }
+        });
+
+        updateSummary();
+
+        document.getElementById("commute-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            setSubmitting(true);
+            setStatus("入力内容を確認しています...", "");
+
+            try {
+                const form = e.target;
+                const rows = Array.from(document.querySelectorAll("#commute-table tbody tr"));
+
+                const carfareDetails = rows.map((tr) => {
+                    const carfareDate = getValue(tr.querySelector('[name="carfare_date[]"]'));
+                    const carfareDestination = getValue(tr.querySelector('[name="carfare_destination[]"]'));
+                    const carfareDestinationLine = getValue(tr.querySelector('[name="carfare_destination_line[]"]'));
+                    const carfareReason = getValue(tr.querySelector('[name="carfare_reason[]"]'));
+                    const carfareDeparture = getValue(tr.querySelector('[name="carfare_departure[]"]'));
+                    const carfareArrival = getValue(tr.querySelector('[name="carfare_arrival[]"]'));
+                    const unitPrice = toNumber(getValue(tr.querySelector('[name="carfare_unit_price[]"]')));
+                    const tripType = getValue(tr.querySelector('[name="carfare_one_way_or_round_trip[]"]'));
+                    const section = getValue(tr.querySelector('[name="carfare_section[]"]'));
+                    const amount = calcRowAmount(unitPrice, tripType);
+
+                    return {
+                        carfare_date: carfareDate,
+                        carfare_destination: carfareDestination,
+                        carfare_destination_line: carfareDestinationLine,
+                        carfare_reason: carfareReason,
+                        carfare_departure: carfareDeparture,
+                        carfare_arrival: carfareArrival,
+                        carfare_unit_price: unitPrice,
+                        carfare_one_way_or_round_trip: tripType,
+                        carfare_section: section,
+                        carfare_amount: amount
+                    };
+                });
+
+                const payload = {
+                    request_id: uuidLike(),
+                    submit_date: form.submit_date.value,
+                    applicant_no: form.applicant_no.value.trim(),
+                    applicant_name: form.applicant_name.value.trim(),
+                    applicant_project_name: form.applicant_project_name.value.trim(),
+                    total_count: carfareDetails.length,
+                    total_amount: carfareDetails.reduce((sum, item) => sum + item.carfare_amount, 0),
+                    carfare_details: carfareDetails
+                };
+
+                setStatus("申請データを送信しています...", "");
+
+                const res = await fetch(API_GENERATE, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(`generate API error: ${text}`);
+                }
+
+                const data = await res.json();
+
+                if (data.download_url) {
+                    setStatus("生成完了。ダウンロードを開始します。", "ok");
+                    window.location.href = data.download_url;
+                } else {
+                    setStatus("送信は完了しましたが、download_url が返ってきませんでした。レスポンスを確認してください。", "error");
+                    console.log("API response:", data);
+                }
+
+            } catch (err) {
+                console.error(err);
+                setStatus(`エラー: ${err.message || err}`, "error");
+            } finally {
+                setSubmitting(false);
+            }
+        });
+    </script>
+</body>
+</html>

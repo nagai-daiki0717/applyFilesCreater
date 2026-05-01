@@ -112,12 +112,15 @@ public class TeikiExcelService {
             String section = p == null ? "" : p.path("section").asText("");
             int minutes = p == null ? 0 : p.path("one_way_minutes").asInt(0);
             JsonNode amountNode = p == null ? null : p.get("amount_yen");
+            String purchasePeriodText = p == null ? ""
+                    : p.path("purchase_period_text").asText("1ヶ月");
             String note = p == null ? "" : p.path("note").asText("");
 
             setCell(wsMain, "B" + r, transportation);
             setCell(wsMain, "D" + r, section);
             setCell(wsMain, "H" + r, minutes == 0 ? "" : minutes + "分");
-            setCell(wsMain, "I" + r, "1ヶ月");
+            setCell(wsMain, "I" + r, purchasePeriodText.isBlank() ? "1ヶ月"
+                    : purchasePeriodText);
             setCellPreserveType(wsMain, Env.PASSES_PRICE_COL + r, amountNode);
             setCell(wsMain, "N" + r, note);
         }
@@ -356,9 +359,9 @@ public class TeikiExcelService {
 
             for (int i = 0; i < lines.length; i++) {
                 if (lines[i].contains(header)) {
-                    String insert = String.format("　  %d年　%d月　%d日",
-                            reasonDate.getYear(), reasonDate.getMonthValue(),
-                            reasonDate.getDayOfMonth());
+                    String insert = String.format("　  %d年　%d月　%d日", reasonDate
+                            .getYear(), reasonDate.getMonthValue(), reasonDate
+                                    .getDayOfMonth());
                     if (i + 1 < lines.length) {
                         lines[i + 1] = insert;
                     }
@@ -369,7 +372,8 @@ public class TeikiExcelService {
 
             if (!replaced) {
                 String insert = String.format("上記理由が生じた年月日%n　　%d年　%d月　%d日",
-                        reasonDate.getYear(), StringUtils.leftPad(String.valueOf(reasonDate.getMonthValue()), 3, " "),
+                        reasonDate.getYear(), StringUtils.leftPad(String
+                                .valueOf(reasonDate.getMonthValue()), 3, " "),
                         reasonDate.getDayOfMonth());
                 return (originalText == null || originalText.isBlank()) ? insert
                         : originalText + System.lineSeparator() + insert;
@@ -415,12 +419,11 @@ public class TeikiExcelService {
 
     public String contentDisposition(String filename) {
         String asciiFallback = "download.xlsx";
-        String encoded = java.net.URLEncoder.encode(
-                filename,
-                java.nio.charset.StandardCharsets.UTF_8
-        ).replace("+", "%20");
+        String encoded = java.net.URLEncoder.encode(filename,
+                java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
 
-        return "attachment; filename=\"" + asciiFallback + "\"; filename*=UTF-8''" + encoded;
+        return "attachment; filename=\"" + asciiFallback
+                + "\"; filename*=UTF-8''" + encoded;
     }
 
     private String normalizeApplicantName(String name) {
