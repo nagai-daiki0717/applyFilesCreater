@@ -409,7 +409,7 @@ public class TeikiExcelService {
     public String buildOutputFilename(JsonNode payload) {
         LocalDate submitDate = parseDate(text(payload, "submitted_at"));
         String yyyymm = submitDate == null ? "日付不明"
-                : String.format("%d年%02d月", submitDate.getYear(), submitDate
+                : String.format("%d年度%02d月", submitDate.getYear(), submitDate
                         .getMonthValue());
 
         String applicant = normalizeApplicantName(text(payload.path(
